@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import API from '../services/api';
+import authClient from '../utils/auth-client';
 
 interface User {
   _id: string;
@@ -22,77 +22,77 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { data: session, isPending } = authClient.useSession();
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load user data on startup if token exists
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    // Don't update state while session is still loading
+    if (isPending) return;
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (session?.user) {
+      const mappedUser: User = {
+        _id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: ((session.user as any).role as 'student' | 'admin') || 'student',
+      };
+      const sessionToken = session.session?.token || '';
+
+      setUser(mappedUser);
+      setToken(sessionToken);
+      localStorage.setItem('token', sessionToken);
+      localStorage.setItem('user', JSON.stringify(mappedUser));
+    } else {
+      // Confirmed logged out
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
-    setLoading(false);
-  }, []);
+  }, [session, isPending]);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
     setError(null);
     try {
-      const response = await API.post('/auth/login', { email, password });
-      const { token: userToken, ...userData } = response.data;
-
-      // Update state and localStorage
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(userToken);
-      setUser(userData);
+      const res = await authClient.signIn.email({ email, password });
+      if (res?.error) {
+        throw new Error(res.error.message || 'Login failed');
+      }
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
+      const errMsg = err.message || 'Login failed. Please check credentials.';
       setError(errMsg);
       throw new Error(errMsg);
-    } finally {
-      setLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string, role: 'student' | 'admin') => {
-    setLoading(true);
     setError(null);
     try {
-      const response = await API.post('/auth/register', { name, email, password, role });
-      const { token: userToken, ...userData } = response.data;
-
-      // Update state and localStorage
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(userToken);
-      setUser(userData);
+      const res = await authClient.signUp.email({ name, email, password, role } as any);
+      if (res?.error) {
+        throw new Error(res.error.message || 'Registration failed');
+      }
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Registration failed. Try again.';
+      const errMsg = err.message || 'Registration failed. Try again.';
       setError(errMsg);
       throw new Error(errMsg);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-    setError(null);
+  const logout = async () => {
+    try {
+      await authClient.signOut();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, register, logout, clearError }}>
+    <AuthContext.Provider value={{ user, token, loading: isPending, error, login, register, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   );

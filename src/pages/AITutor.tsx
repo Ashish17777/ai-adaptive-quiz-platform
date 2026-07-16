@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../services/api';
-import GlassCard from '../components/GlassCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import {
   ArrowLeft, Send, BrainCircuit, User, Sparkles,
   BookOpen, Zap, TrendingUp, HelpCircle
@@ -23,11 +25,10 @@ const QUICK_PROMPTS = [
 ];
 
 const formatContent = (text: string) => {
-  // Convert **bold** markdown to JSX
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="text-white">{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="text-gray-900 dark:text-white font-bold">{part.slice(2, -2)}</strong>;
     }
     return <span key={i}>{part}</span>;
   });
@@ -134,24 +135,28 @@ const AITutor: React.FC = () => {
         <div>
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center space-x-2 text-xs font-semibold text-gray-400 hover:text-white mb-1 transition-colors"
+            className="flex items-center space-x-2 text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>
           </button>
-          <h2 className="text-xl font-extrabold text-white flex items-center space-x-2">
-            <BrainCircuit className="w-5 h-5 text-indigo-400 animate-pulse" />
+          <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center space-x-2 mt-1">
+            <BrainCircuit className="w-5 h-5 text-indigo-600 animate-pulse" />
             <span>AI Study Tutor</span>
-            <span className="text-xs font-normal text-gray-400 ml-1">Powered by Adaptive AI</span>
+            <Badge variant="secondary" className="text-[10px] font-semibold px-2 py-0.5 ml-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+              Adaptive AI
+            </Badge>
           </h2>
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => navigate('/dashboard/practice')}
-          className="flex items-center space-x-1.5 px-3 py-2 text-xs font-bold bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 rounded-xl transition-all"
+          className="flex items-center space-x-1.5 h-8 font-bold"
         >
-          <Zap className="w-3.5 h-3.5" />
+          <Zap className="w-3.5 h-3.5 text-indigo-500" />
           <span>Practice</span>
-        </button>
+        </Button>
       </div>
 
       {/* Quick Prompts */}
@@ -159,95 +164,100 @@ const AITutor: React.FC = () => {
         {QUICK_PROMPTS.map((p) => {
           const Icon = p.icon;
           return (
-            <button
+            <Button
               key={p.label}
+              variant="outline"
+              size="sm"
               onClick={() => handleSend(p.label)}
               disabled={sending}
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all disabled:opacity-50"
+              className="flex items-center space-x-1.5 h-8 text-xs text-gray-600 dark:text-gray-300 font-semibold"
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5 text-indigo-500" />
               <span>{p.label}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
 
       {/* Messages Window */}
-      <GlassCard className="border border-white/5 flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex items-start space-x-3 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
-              msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-            }`}
-          >
-            {/* Avatar */}
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              msg.role === 'assistant'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white/10 text-gray-300'
-            }`}>
-              {msg.role === 'assistant'
-                ? <BrainCircuit className="w-4 h-4" />
-                : <User className="w-4 h-4" />}
-            </div>
+      <Card className="border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-1 overflow-y-auto min-h-0">
+        <CardContent className="p-4 space-y-4">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex items-start space-x-3 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+                msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              }`}
+            >
+              {/* Avatar */}
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                msg.role === 'assistant'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700'
+              }`}>
+                {msg.role === 'assistant'
+                  ? <BrainCircuit className="w-4 h-4" />
+                  : <User className="w-4 h-4" />}
+              </div>
 
-            {/* Bubble */}
-            <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-              msg.role === 'assistant'
-                ? 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none'
-                : 'bg-indigo-600/90 text-white rounded-tr-none'
-            }`}>
-              {msg.role === 'assistant'
-                ? <span className="text-gray-200">{formatContent(msg.content)}</span>
-                : msg.content}
-              <div className={`text-[10px] mt-1.5 opacity-50 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {/* Bubble */}
+              <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                msg.role === 'assistant'
+                  ? 'bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 text-gray-800 dark:text-gray-200 rounded-tl-none font-medium'
+                  : 'bg-indigo-600 text-white rounded-tr-none font-semibold'
+              }`}>
+                {msg.role === 'assistant'
+                  ? <span>{formatContent(msg.content)}</span>
+                  : msg.content}
+                <div className={`text-[10px] mt-1.5 opacity-50 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Typing indicator */}
-        {sending && (
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
-              <BrainCircuit className="w-4 h-4 text-white" />
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none px-4 py-3">
-              <div className="flex space-x-1.5">
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          {/* Typing indicator */}
+          {sending && (
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+                <BrainCircuit className="w-4 h-4 text-white" />
+              </div>
+              <div className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl rounded-tl-none px-4 py-3">
+                <div className="flex space-x-1.5">
+                  <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </GlassCard>
+          )}
+          <div ref={messagesEndRef} />
+        </CardContent>
+      </Card>
 
       {/* Input Area */}
       <div className="mt-4 flex-shrink-0">
-        <div className="flex items-end space-x-3 bg-white/5 border border-white/10 rounded-2xl p-3 focus-within:border-indigo-500/50 transition-colors">
-          <Sparkles className="w-4 h-4 text-gray-500 mb-2 flex-shrink-0" />
+        <div className="flex items-end space-x-3 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl p-3 focus-within:border-indigo-500/50 dark:focus-within:border-indigo-500/50 transition-colors shadow-sm">
+          <Sparkles className="w-4 h-4 text-gray-400 mb-2.5 flex-shrink-0" />
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask your AI tutor anything… (Enter to send)"
             rows={1}
-            className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 resize-none outline-none leading-relaxed max-h-32 overflow-y-auto"
+            className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none outline-none leading-relaxed max-h-32 overflow-y-auto border-0 p-0 focus:ring-0 focus:ring-offset-0"
             style={{ minHeight: '24px' }}
           />
-          <button
+          <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || sending}
-            className="flex-shrink-0 w-9 h-9 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20"
+            size="icon"
+            className="flex-shrink-0 w-8.5 h-8.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl shadow-sm transition-all"
           >
             <Send className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
-        <p className="text-[10px] text-gray-600 mt-1.5 text-center">
+        <p className="text-[10px] text-gray-500 mt-1.5 text-center">
           Press Enter to send · Shift+Enter for new line
         </p>
       </div>

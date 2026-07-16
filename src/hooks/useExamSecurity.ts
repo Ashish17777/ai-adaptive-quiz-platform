@@ -38,7 +38,6 @@ export const useExamSecurity = ({
   onAutoSubmitTriggered,
   onViolationWarning,
   isActive,
-  roomCode,
   onSecurityEvent,
 }: UseExamSecurityProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);

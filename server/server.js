@@ -8,9 +8,6 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -21,8 +18,37 @@ const io = new Server(server, {
 });
 app.set('io', io);
 
+// Dynamic Better Auth handler — loads AFTER dotenv is set up
+let authHandler;
+(async () => {
+  try {
+    await connectDB();
+    const { toNodeHandler } = await import('better-auth/node');
+    const { auth } = await import('./auth.mjs');
+    authHandler = toNodeHandler(auth);
+    console.log('Better Auth successfully initialized.');
+  } catch (err) {
+    console.error('Failed to initialize Better Auth:', err);
+  }
+})();
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, true);
+  },
+  credentials: true
+}));
+
+// Mount Better Auth handler BEFORE body parsers to prevent JSON parsing hangs on post streams
+app.all('/api/auth/*', (req, res, next) => {
+  if (authHandler) {
+    authHandler(req, res, next);
+  } else {
+    res.status(503).json({ success: false, message: 'Auth service starting...' });
+  }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -34,7 +60,9 @@ const attemptRoutes = require('./routes/attemptRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 
 // Mount Routes
-app.use('/api/auth', authRoutes);
+// NOTE: /api/auth/* is handled exclusively by Better Auth above.
+// Legacy JWT routes moved to /api/legacy-auth for backward compatibility.
+app.use('/api/legacy-auth', authRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/rooms', roomRoutes);
