@@ -23,6 +23,33 @@ const Navbar: React.FC = () => {
     navigate('/');
   };
 
+  const handleSwitchRole = async (newRole: 'student' | 'admin') => {
+    try {
+      const token = localStorage.getItem('token');
+      const targetUrl = `${window.location.protocol}//${window.location.hostname}:5000/api/user/role`;
+      const res = await fetch(targetUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (res.ok) {
+        window.location.href = newRole === 'admin' ? '/admin' : '/dashboard';
+      } else {
+        const text = await res.text();
+        let message = 'Failed to switch role';
+        try { message = JSON.parse(text).message || message; } catch (_) {}
+        alert(message);
+      }
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+    }
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-6 py-3.5 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -65,23 +92,31 @@ const Navbar: React.FC = () => {
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-xs text-indigo-600 font-medium capitalize truncate">{user.role} Account</p>
+                      <p className="text-xs text-indigo-600 font-medium capitalize truncate">
+                        {user.role === 'admin' ? 'Faculty / Admin Account' : 'Student Account'}
+                      </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {user.role === 'admin' ? (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="w-full flex items-center space-x-2">
-                        <Shield className="w-4 h-4" />
-                        <span>Admin Panel</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="w-full flex items-center space-x-2">
+                          <Shield className="w-4 h-4 text-indigo-600" />
+                          <span className="font-medium">Admin Panel</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSwitchRole('student')} className="text-gray-600 hover:text-gray-900">
+                        <GraduationCap className="w-4 h-4 mr-2" />
+                        <span>Switch to Student View</span>
+                      </DropdownMenuItem>
+                    </>
                   ) : (
                     <>
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="w-full flex items-center space-x-2">
                           <LayoutDashboard className="w-4 h-4" />
-                          <span>Dashboard</span>
+                          <span>Student Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -95,6 +130,11 @@ const Navbar: React.FC = () => {
                           <GraduationCap className="w-4 h-4" />
                           <span>AI Tutor</span>
                         </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleSwitchRole('admin')} className="text-indigo-600 font-medium">
+                        <Shield className="w-4 h-4 mr-2" />
+                        <span>Switch to Faculty / Admin</span>
                       </DropdownMenuItem>
                     </>
                   )}

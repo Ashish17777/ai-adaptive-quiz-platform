@@ -64,7 +64,14 @@ const AppRoutes: React.FC = () => {
           await new Promise((r) => setTimeout(r, 100));
           const { data: session } = await authClient.getSession();
           if (session?.user) {
-            const role = (session.user as any).role || 'student';
+            let role = (session.user as any).role || 'student';
+            const savedUserStr = localStorage.getItem('user');
+            if (savedUserStr) {
+              try {
+                const saved = JSON.parse(savedUserStr);
+                if (saved.role) role = saved.role;
+              } catch (_) {}
+            }
             const targetRoute = role === 'admin' ? '/admin' : '/dashboard';
             navigate(targetRoute, { replace: true });
           }

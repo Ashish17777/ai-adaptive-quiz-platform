@@ -54,6 +54,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Route Files
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const questionRoutes = require('./routes/questionRoutes');
 const quizRoutes = require('./routes/quizRoutes');
 const attemptRoutes = require('./routes/attemptRoutes');
@@ -63,6 +64,7 @@ const roomRoutes = require('./routes/roomRoutes');
 // NOTE: /api/auth/* is handled exclusively by Better Auth above.
 // Legacy JWT routes moved to /api/legacy-auth for backward compatibility.
 app.use('/api/legacy-auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/rooms', roomRoutes);

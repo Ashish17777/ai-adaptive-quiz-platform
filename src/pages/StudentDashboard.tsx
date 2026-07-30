@@ -36,7 +36,8 @@ import {
   CheckSquare,
   Square,
   ChevronRight,
-  Users
+  Users,
+  Shield
 } from 'lucide-react';
 
 interface Quiz {
@@ -183,6 +184,33 @@ const StudentDashboard: React.FC = () => {
     return 'text-red-400 border-red-500/20 bg-red-500/5';
   };
 
+  const handleSwitchToAdmin = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const targetUrl = `${window.location.protocol}//${window.location.hostname}:5000/api/user/role`;
+      const res = await fetch(targetUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ role: 'admin' }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/admin';
+      } else {
+        const text = await res.text();
+        let message = 'Failed to switch role';
+        try { message = JSON.parse(text).message || message; } catch (_) {}
+        alert(message);
+      }
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+    }
+  };
+
   if (loading) return <LoadingSpinner fullPage />;
 
   return (
@@ -197,6 +225,15 @@ const StudentDashboard: React.FC = () => {
           <p className="text-gray-400 text-sm mt-2 max-w-xl leading-relaxed">
             Diagnose your performance in real-time, progress along your dynamically generated study path, or drill specific subjects.
           </p>
+          <div className="mt-4">
+            <button
+              onClick={handleSwitchToAdmin}
+              className="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+            >
+              <Shield className="w-4 h-4" />
+              <span>Switch to Faculty / Admin Portal</span>
+            </button>
+          </div>
         </div>
         <div className="flex items-center space-x-3 self-start md:self-auto">
           {streak && streak.current > 0 && (

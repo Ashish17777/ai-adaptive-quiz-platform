@@ -22,7 +22,16 @@ const ProtectedLayout: React.FC<ProtectedLayoutProps> = ({ allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  const role = (session.user as any).role as 'student' | 'admin' | undefined;
+  let role = (session?.user as any)?.role as 'student' | 'admin' | undefined;
+  const savedUserStr = localStorage.getItem('user');
+  if (savedUserStr) {
+    try {
+      const savedUser = JSON.parse(savedUserStr);
+      if (savedUser.role) {
+        role = savedUser.role;
+      }
+    } catch (_) {}
+  }
 
   // Role-based access check
   if (allowedRoles && role && !allowedRoles.includes(role)) {
