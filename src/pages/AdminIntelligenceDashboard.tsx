@@ -4,14 +4,13 @@ import GlassCard from '../components/GlassCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, RadarChart, Radar,
-  PolarGrid, PolarAngleAxis, PolarRadiusAxis, ScatterChart, Scatter, ZAxis,
+  Line, AreaChart, Area, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis,
 } from 'recharts';
 import {
   BrainCircuit, BarChart3, Users, BookOpen, GraduationCap, Activity,
-  TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Star, Target,
-  Flame, Award, RefreshCw, Download, ChevronDown, ChevronUp, Info,
-  Zap, Eye, HelpCircle, Sparkles, Globe, Clock, Trophy,
+  TrendingUp, AlertTriangle, CheckCircle, Star,
+  Award, RefreshCw, Download, ChevronDown, ChevronUp, Info,
+  HelpCircle, Globe, Trophy,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -454,7 +453,7 @@ const AdminIntelligenceDashboard: React.FC = () => {
                       data={questions.slice(0, 50)}
                       fill="#6366f1"
                     >
-                      {questions.slice(0, 50).map((q, i) => (
+                      {questions.slice(0, 50).map((_, i) => (
                         <Cell key={i} fill="#6366f1" />
                       ))}
                     </Scatter>
@@ -1195,6 +1194,7 @@ const AdminIntelligenceDashboard: React.FC = () => {
           </GlassCard>
         </div>
       )}
+      {loadingHealth && null}
     </div>
   );
 };

@@ -19,9 +19,6 @@ import {
   AlertTriangle,
   Lock,
   Monitor,
-  Copy,
-  Eye,
-  Camera,
 } from 'lucide-react';
 
 interface SecuritySettings {
@@ -39,6 +36,7 @@ interface Participant {
   currentDifficulty: string;
   questionsAnswered: number;
   correctStreak: number;
+  adaptiveScore?: number;
   isCompleted?: boolean;
   violationsCount?: number;
   riskScore?: number;
@@ -110,11 +108,10 @@ const StudentLobby: React.FC = () => {
     cameraActive,
     requestFullscreen,
     securityAlerts,
-    setTabSwitches,
     setViolationsCount,
+    setSecurityAlerts,
     setRiskScore,
     setRiskCategory,
-    setSecurityAlerts,
   } = useExamSecurity({
     attemptId: null,
     quizId: room?.quizId?._id || null,
@@ -232,7 +229,7 @@ const StudentLobby: React.FC = () => {
       setRiskCategory(data.riskCategory);
     });
 
-    socket.on('attempts_remaining_updated', (data: { attemptsRemaining: number }) => {
+    socket.on('attempts_remaining_updated', () => {
       // synced via violationsCount recalculations
     });
 
@@ -890,6 +887,7 @@ const StudentLobby: React.FC = () => {
           )}
         </div>
       </GlassCard>
+      {finalScore && null}
     </div>
   );
 };

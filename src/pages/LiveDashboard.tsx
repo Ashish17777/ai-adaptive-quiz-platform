@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../services/api';
 import GlassCard from '../components/GlassCard';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import {
   Activity, Users, Trophy, CheckCircle, Clock, Zap,
-  RefreshCw, Radio, TrendingUp, BookOpen,
+  RefreshCw, Radio, TrendingUp,
 } from 'lucide-react';
 
 interface LiveData {
@@ -25,8 +25,8 @@ const LiveDashboard: React.FC = () => {
   const [countdown, setCountdown] = useState(10);
   const [scoreHistory, setScoreHistory] = useState<Array<{ time: string; score: number }>>([]);
   const [activityHistory, setActivityHistory] = useState<Array<{ time: string; active: number; completed: number }>>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchLive = async () => {
     try {

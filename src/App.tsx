@@ -1,7 +1,9 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthUIProvider } from '@daveyplate/better-auth-ui';
+import authClient from './utils/auth-client';
 
 // Layouts
 import ProtectedLayout from './layouts/ProtectedLayout';
@@ -38,53 +40,98 @@ import AdminSecurityDashboard from './pages/AdminSecurityDashboard';
 import AdminIntelligenceDashboard from './pages/AdminIntelligenceDashboard';
 import LiveDashboard from './pages/LiveDashboard';
 
+const RouterLinkBridge: React.FC<{ href: string; className?: string; children: React.ReactNode }> = ({ href, className, children }) => {
+  return (
+    <Link to={href} className={className}>
+      {children}
+    </Link>
+  );
+};
+
+const AppRoutes: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+    <AuthUIProvider
+      authClient={authClient}
+      navigate={navigate}
+      replace={(to) => navigate(to, { replace: true })}
+      Link={RouterLinkBridge}
+      social={{ providers: ['google'] }}
+      onSessionChange={async () => {
+        try {
+          // Small delay to let the session cookie propagate
+          await new Promise((r) => setTimeout(r, 100));
+          const { data: session } = await authClient.getSession();
+          if (session?.user) {
+            let role = (session.user as any).role || 'student';
+            const savedUserStr = localStorage.getItem('user');
+            if (savedUserStr) {
+              try {
+                const saved = JSON.parse(savedUserStr);
+                if (saved.role) role = saved.role;
+              } catch (_) {}
+            }
+            const targetRoute = role === 'admin' ? '/admin' : '/dashboard';
+            navigate(targetRoute, { replace: true });
+          }
+        } catch (err) {
+          console.error('onSessionChange error:', err);
+        }
+      }}
+    >
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/multiplayer/join" element={<StudentJoin />} />
+        <Route path="/multiplayer/lobby/:roomCode" element={<StudentLobby />} />
+
+        {/* Student Protected Routes */}
+        <Route element={<ProtectedLayout allowedRoles={['student', 'admin']} />}>
+          <Route element={<StudentLayout />}>
+            <Route path="/dashboard" element={<StudentDashboard />} />
+            <Route path="/dashboard/analytics" element={<StudentAnalytics />} />
+            <Route path="/dashboard/report/:attemptId" element={<AIReportCard />} />
+            <Route path="/dashboard/learning-path" element={<LearningPath />} />
+            <Route path="/dashboard/practice" element={<PracticeQuiz />} />
+            <Route path="/dashboard/ai-tutor" element={<AITutor />} />
+            <Route path="/quiz/:quizId" element={<QuizPage />} />
+            <Route path="/result/:attemptId" element={<ResultPage />} />
+          </Route>
+        </Route>
+
+        {/* Admin Protected Routes */}
+        <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/questions" element={<AdminQuestions />} />
+            <Route path="/admin/quizzes" element={<AdminQuizzes />} />
+            <Route path="/admin/ai-insights" element={<AdminAIInsights />} />
+            <Route path="/admin/ai-question-generator" element={<AdminAIQuestionGenerator />} />
+            <Route path="/admin/ai-quiz-generator" element={<AdminAIQuizGenerator />} />
+            <Route path="/admin/security" element={<AdminSecurityDashboard />} />
+            <Route path="/admin/intelligence" element={<AdminIntelligenceDashboard />} />
+            <Route path="/admin/live" element={<LiveDashboard />} />
+          </Route>
+          <Route path="/admin/lobby/:roomCode" element={<HostLobby />} />
+        </Route>
+
+        {/* Fallback Redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthUIProvider>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/multiplayer/join" element={<StudentJoin />} />
-            <Route path="/multiplayer/lobby/:roomCode" element={<StudentLobby />} />
-
-            {/* Student Protected Routes */}
-            <Route element={<ProtectedLayout allowedRoles={['student', 'admin']} />}>
-              <Route element={<StudentLayout />}>
-                <Route path="/dashboard" element={<StudentDashboard />} />
-                <Route path="/dashboard/analytics" element={<StudentAnalytics />} />
-                <Route path="/dashboard/report/:attemptId" element={<AIReportCard />} />
-                <Route path="/dashboard/learning-path" element={<LearningPath />} />
-                <Route path="/dashboard/practice" element={<PracticeQuiz />} />
-                <Route path="/dashboard/ai-tutor" element={<AITutor />} />
-                <Route path="/quiz/:quizId" element={<QuizPage />} />
-                <Route path="/result/:attemptId" element={<ResultPage />} />
-              </Route>
-            </Route>
-
-            {/* Admin Protected Routes */}
-            <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                <Route path="/admin/questions" element={<AdminQuestions />} />
-                <Route path="/admin/quizzes" element={<AdminQuizzes />} />
-                <Route path="/admin/ai-insights" element={<AdminAIInsights />} />
-                <Route path="/admin/ai-question-generator" element={<AdminAIQuestionGenerator />} />
-                <Route path="/admin/ai-quiz-generator" element={<AdminAIQuizGenerator />} />
-                <Route path="/admin/security" element={<AdminSecurityDashboard />} />
-                <Route path="/admin/intelligence" element={<AdminIntelligenceDashboard />} />
-                <Route path="/admin/live" element={<LiveDashboard />} />
-              </Route>
-              <Route path="/admin/lobby/:roomCode" element={<HostLobby />} />
-            </Route>
-
-            {/* Fallback Redirect */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

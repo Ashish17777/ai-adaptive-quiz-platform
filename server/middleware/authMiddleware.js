@@ -1,10 +1,49 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
+let authInstance;
+const getAuthInstance = async () => {
+  if (!authInstance) {
+    try {
+      const { auth } = await import('../auth.mjs');
+      authInstance = auth;
+    } catch (err) {
+      console.error('Error loading Better Auth in middleware:', err);
+    }
+  }
+  return authInstance;
+};
+
 // Protect routes
 const protect = async (req, res, next) => {
-  let token;
+  // 1. Try Better Auth Session first
+  try {
+    const auth = await getAuthInstance();
+    if (auth) {
+      const session = await auth.api.getSession({
+        headers: req.headers,
+      });
 
+      if (session) {
+        req.user = {
+          _id: session.user.id,
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+          role: session.user.role || 'student',
+          currentStreak: session.user.currentStreak || 0,
+          longestStreak: session.user.longestStreak || 0,
+          lastActiveDate: session.user.lastActiveDate,
+        };
+        return next();
+      }
+    }
+  } catch (error) {
+    console.error('Better Auth session resolution error:', error);
+  }
+
+  // 2. Fallback to JWT Token validation
+  let token;
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -17,22 +56,17 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
 
       // Get user from the token (exclude password)
-      req.user = await User.findById(decoded.id).select('-password');
-
-      if (!req.user) {
-        return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
+      const user = await User.findById(decoded.id).select('-password');
+      if (user) {
+        req.user = user;
+        return next();
       }
-
-      next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+      console.error('JWT token fallback failed:', error);
     }
   }
 
-  if (!token) {
-    res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
-  }
+  return res.status(401).json({ success: false, message: 'Not authorized, please authenticate' });
 };
 
 // Grant access to specific roles

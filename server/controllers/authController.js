@@ -26,7 +26,6 @@ const registerUser = async (req, res) => {
     }
 
     // Create user
-    // Only allow registering as 'student' or 'admin' (validate/filter input)
     const userRole = role === 'admin' ? 'admin' : 'student';
 
     const user = await User.create({
@@ -35,6 +34,19 @@ const registerUser = async (req, res) => {
       password,
       role: userRole,
     });
+
+    // Also update direct collection if better-auth mongodb adapter is used
+    const mongoose = require('mongoose');
+    if (mongoose.connection.db) {
+      await mongoose.connection.db.collection('user').updateOne(
+        { _id: user._id },
+        { $set: { role: userRole } }
+      ).catch(() => {});
+      await mongoose.connection.db.collection('user').updateOne(
+        { id: String(user._id) },
+        { $set: { role: userRole } }
+      ).catch(() => {});
+    }
 
     if (user) {
       res.status(201).json({
@@ -58,7 +70,7 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role: requestedRole } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
@@ -75,6 +87,24 @@ const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // If a specific role was selected on sign in (e.g. admin), update user role immediately
+    if (requestedRole && ['student', 'admin'].includes(requestedRole)) {
+      user.role = requestedRole;
+      await user.save();
+
+      const mongoose = require('mongoose');
+      if (mongoose.connection.db) {
+        await mongoose.connection.db.collection('user').updateOne(
+          { _id: user._id },
+          { $set: { role: requestedRole } }
+        ).catch(() => {});
+        await mongoose.connection.db.collection('user').updateOne(
+          { id: String(user._id) },
+          { $set: { role: requestedRole } }
+        ).catch(() => {});
+      }
     }
 
     res.json({
