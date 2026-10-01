@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GlassCard from '../components/GlassCard';
+import OTPVerificationModal from '../components/OTPVerificationModal';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import { BrainCircuit, Mail, Lock, User } from 'lucide-react';
+import API from '../services/api';
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -12,15 +15,16 @@ const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
-  const { register } = useAuth();
+  const { setUserInContext } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
-    // Form validation
     if (!name.trim() || !email.trim() || !password) {
       return setFormError('All fields are required');
     }
@@ -33,11 +37,52 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await register(name, email, password, role);
-      // Success redirects to appropriate dashboard
-      navigate(role === 'admin' ? '/admin' : '/dashboard');
+      const response = await API.post('/auth/register', {
+        name,
+        email,
+        password,
+        role,
+      });
+
+      if (response.data.requiresVerification) {
+        setRegisteredEmail(response.data.email);
+        setShowOtpModal(true);
+      }
     } catch (err: any) {
-      setFormError(err.message || 'Registration failed. Email might already be taken.');
+      setFormError(err.response?.data?.message || err.message || 'Registration failed. Email might already be taken.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpSuccess = (userData: any) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', userData.token);
+    setUserInContext(userData);
+    setShowOtpModal(false);
+    navigate(userData.role === 'admin' ? '/admin' : '/dashboard');
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) return;
+
+    setLoading(true);
+    setFormError(null);
+
+    try {
+      const res = await API.post('/auth/google', {
+        credential: credentialResponse.credential,
+        role,
+      });
+
+      if (res.data.success) {
+        localStorage.setItem('user', JSON.stringify(res.data));
+        localStorage.setItem('token', res.data.token);
+        setUserInContext(res.data);
+        navigate(res.data.role === 'admin' ? '/admin' : '/dashboard');
+      }
+    } catch (err: any) {
+      setFormError(err.response?.data?.message || 'Google Authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -69,19 +114,34 @@ const RegisterPage: React.FC = () => {
           </div>
         )}
 
+        {/* Google OAuth Button */}
+        <div className="mb-5 flex flex-col items-center justify-center w-full">
+          <div className="w-full flex justify-center">
+            <GoogleAuthButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => setFormError('Google Login encountered an issue.')}
+              text="signup_with"
+            />
+          </div>
+          <div className="relative my-4 w-full text-center border-b border-gray-200 leading-[0.1em]">
+            <span className="bg-white px-3 text-xs text-gray-400 font-semibold uppercase">Or with Email</span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full pl-11 pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
                 required
               />
             </div>
@@ -92,13 +152,14 @@ const RegisterPage: React.FC = () => {
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
                 required
               />
             </div>
@@ -140,13 +201,14 @@ const RegisterPage: React.FC = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full pl-11 pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
+                  style={{ paddingLeft: '2.75rem' }}
+                  className="w-full pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
                   required
                 />
               </div>
@@ -157,13 +219,14 @@ const RegisterPage: React.FC = () => {
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full pl-11 pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
+                  style={{ paddingLeft: '2.75rem' }}
+                  className="w-full pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
                   required
                 />
               </div>
@@ -188,6 +251,14 @@ const RegisterPage: React.FC = () => {
           </p>
         </div>
       </GlassCard>
+
+      {/* 6-Digit Email OTP Verification Modal */}
+      <OTPVerificationModal
+        email={registeredEmail}
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        onSuccess={handleOtpSuccess}
+      />
     </div>
   );
 };

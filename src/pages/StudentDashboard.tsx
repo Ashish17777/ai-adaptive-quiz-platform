@@ -150,31 +150,21 @@ const StudentDashboard: React.FC = () => {
       value: attempt.percentage,
     }));
 
-  // Recharts Radar Chart topic mapping
+  // Recharts Radar Chart topic mapping — real data only, no fake fallback
   const radarChartData = skillProfile && skillProfile.topicMastery
     ? Object.entries(skillProfile.topicMastery).map(([topic, acc]: any) => ({
         subject: topic.charAt(0).toUpperCase() + topic.slice(1),
         accuracy: acc
       }))
-    : [
-        { subject: 'Algebra', accuracy: 60 },
-        { subject: 'Geometry', accuracy: 50 },
-        { subject: 'Probability', accuracy: 40 },
-        { subject: 'Statistics', accuracy: 70 }
-      ];
+    : [];
 
-  // Recharts Velocity chart mapping
+  // Recharts Velocity chart mapping — real data only, no fake fallback
   const velocityChartData = metrics && metrics.velocityHistory && metrics.velocityHistory.length > 0
     ? metrics.velocityHistory.slice(-6).map((vh: any) => ({
         date: new Date(vh.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }),
         velocity: vh.velocity
       }))
-    : [
-        { date: 'Initial', velocity: 0 },
-        { date: 'Session 2', velocity: 5 },
-        { date: 'Session 3', velocity: 12 },
-        { date: 'Session 4', velocity: 15 }
-      ];
+    : [];
 
   // Get readiness color
   const getReadinessColor = (score: number) => {
@@ -477,46 +467,51 @@ const StudentDashboard: React.FC = () => {
                 <Target className="w-5 h-5 text-indigo-400" />
                 <span>Subject Mastery Matrix</span>
               </h3>
-              <div className="h-64 sm:h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarChartData}>
-                    <PolarGrid stroke="#ffffff10" />
-                    <PolarAngleAxis dataKey="subject" stroke="#a1a1aa" fontSize={11} fontWeight="bold" />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#a1a1aa" fontSize={9} />
-                    <Radar
-                      name="Accuracy"
-                      dataKey="accuracy"
-                      stroke="#818cf8"
-                      fill="#818cf8"
-                      fillOpacity={0.25}
-                    />
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0f1d', borderColor: '#ffffff10', color: '#fff' }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+              {radarChartData.length > 0 ? (
+                <div className="h-64 sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarChartData}>
+                      <PolarGrid stroke="#ffffff10" />
+                      <PolarAngleAxis dataKey="subject" stroke="#a1a1aa" fontSize={11} fontWeight="bold" />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#a1a1aa" fontSize={9} />
+                      <Radar name="Accuracy" dataKey="accuracy" stroke="#818cf8" fill="#818cf8" fillOpacity={0.25} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0a0f1d', borderColor: '#ffffff10', color: '#fff' }} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-48 flex flex-col items-center justify-center text-center space-y-2">
+                  <Target className="w-8 h-8 text-gray-600" />
+                  <p className="text-sm font-semibold text-gray-500">No skill data yet</p>
+                  <p className="text-xs text-gray-600">Complete a quiz to build your mastery profile.</p>
+                </div>
+              )}
             </GlassCard>
 
             {/* Mastery Heatmap Grid */}
             <div className="space-y-3">
               <h3 className="text-base font-bold text-white tracking-tight">Mastery Heatmap</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {radarChartData.map((data, index) => {
-                  let opacityClass = 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400';
-                  if (data.accuracy >= 85) opacityClass = 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400';
-                  else if (data.accuracy >= 60) opacityClass = 'bg-indigo-500/30 border-indigo-500/50 text-indigo-300';
-                  else opacityClass = 'bg-red-500/10 border-red-500/20 text-red-400';
-
-                  return (
-                    <GlassCard key={index} className={`border p-4 text-center space-y-1 ${opacityClass}`}>
-                      <h4 className="text-xs font-extrabold uppercase tracking-wide truncate">{data.subject}</h4>
-                      <p className="text-2xl font-black">{data.accuracy}%</p>
-                      <span className="text-[9px] font-bold opacity-80">
-                        {data.accuracy >= 85 ? 'Mastered' : data.accuracy >= 60 ? 'Moderate' : 'Review Needed'}
-                      </span>
-                    </GlassCard>
-                  );
-                })}
-              </div>
+              {radarChartData.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {radarChartData.map((data, index) => {
+                    let opacityClass = 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400';
+                    if (data.accuracy >= 85) opacityClass = 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400';
+                    else if (data.accuracy >= 60) opacityClass = 'bg-indigo-500/30 border-indigo-500/50 text-indigo-300';
+                    else opacityClass = 'bg-red-500/10 border-red-500/20 text-red-400';
+                    return (
+                      <GlassCard key={index} className={`border p-4 text-center space-y-1 ${opacityClass}`}>
+                        <h4 className="text-xs font-extrabold uppercase tracking-wide truncate">{data.subject}</h4>
+                        <p className="text-2xl font-black">{data.accuracy}%</p>
+                        <span className="text-[9px] font-bold opacity-80">
+                          {data.accuracy >= 85 ? 'Mastered' : data.accuracy >= 60 ? 'Moderate' : 'Review Needed'}
+                        </span>
+                      </GlassCard>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-600 text-sm">Complete quizzes to populate your heatmap.</div>
+              )}
             </div>
 
             {/* Learning Velocity Trend Graph */}
@@ -525,17 +520,25 @@ const StudentDashboard: React.FC = () => {
                 <Activity className="w-5 h-5 text-indigo-400" />
                 <span>Learning Velocity (Slope of accuracy change)</span>
               </h3>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={velocityChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
-                    <XAxis dataKey="date" stroke="#6b7280" fontSize={10} />
-                    <YAxis stroke="#6b7280" fontSize={10} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0f1d', borderColor: '#ffffff10', color: '#fff' }} />
-                    <Line type="monotone" dataKey="velocity" stroke="#a78bfa" strokeWidth={3} dot={{ fill: '#c084fc', r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {velocityChartData.length > 0 ? (
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={velocityChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
+                      <XAxis dataKey="date" stroke="#6b7280" fontSize={10} />
+                      <YAxis stroke="#6b7280" fontSize={10} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0a0f1d', borderColor: '#ffffff10', color: '#fff' }} />
+                      <Line type="monotone" dataKey="velocity" stroke="#a78bfa" strokeWidth={3} dot={{ fill: '#c084fc', r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-48 flex flex-col items-center justify-center text-center space-y-2">
+                  <Activity className="w-8 h-8 text-gray-600" />
+                  <p className="text-sm font-semibold text-gray-500">No velocity data yet</p>
+                  <p className="text-xs text-gray-600">Your learning speed will appear after multiple quiz sessions.</p>
+                </div>
+              )}
             </GlassCard>
           </div>
 
@@ -627,6 +630,9 @@ const StudentDashboard: React.FC = () => {
 
               {/* Sub-node nodes */}
               <div className="space-y-6 pl-6 relative">
+                {radarChartData.length === 0 && (
+                  <p className="text-sm text-gray-500 py-6">Complete quizzes to unlock your skill tree nodes.</p>
+                )}
                 {radarChartData.map((data, idx) => {
                   const isUnlocked = data.accuracy >= 60;
                   const isMastered = data.accuracy >= 85;

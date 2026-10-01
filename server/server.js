@@ -8,9 +8,9 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
+const PORT = process.env.PORT || 5000;
 
+// Create app and server BEFORE startServer so they are in scope
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -79,8 +79,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Connect to DB then start listening
+connectDB().then(() => {
+  server.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+}).catch((err) => {
+  console.error('❌ Failed to connect to database:', err.message);
+  process.exit(1);
 });

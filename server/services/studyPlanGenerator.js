@@ -13,6 +13,9 @@ async function generateStudyPlan(userId) {
     const profile = await StudentProfile.findOne({ userId });
     const masteries = await TopicMastery.find({ userId });
 
+    // Don't generate a plan if there is no real data to base it on
+    if (masteries.length === 0) return null;
+
     // Classify topics
     const weakTopics = [];
     const moderateTopics = [];
@@ -26,11 +29,12 @@ async function generateStudyPlan(userId) {
       else weakTopics.push(topic);
     });
 
-    // Provide default topics if database is unseeded/empty
-    const defaults = ['algebra', 'probability', 'geometry', 'statistics'];
-    const weak = weakTopics.length > 0 ? weakTopics : [defaults[0]];
-    const moderate = moderateTopics.length > 0 ? moderateTopics : [defaults[1], defaults[2]];
-    const strong = strongTopics.length > 0 ? strongTopics : [defaults[defaults.length - 1]];
+    // Need at least one weak or moderate topic to build a meaningful plan
+    const weak = weakTopics.length > 0 ? weakTopics : moderateTopics;
+    const moderate = moderateTopics.length > 0 ? moderateTopics : weakTopics;
+    const strong = strongTopics;
+
+    if (weak.length === 0 && moderate.length === 0) return null;
 
     const weeks = [];
 

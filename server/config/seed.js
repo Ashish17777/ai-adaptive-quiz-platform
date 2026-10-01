@@ -145,9 +145,11 @@ const sampleQuestions = [
 
 const seedDB = async () => {
   try {
-    // Connect to database
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/adaptive-quiz');
-    console.log('Connected to MongoDB for seeding...');
+    // Connect to database if not already connected
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/adaptive-quiz');
+      console.log('Connected to MongoDB for seeding...');
+    }
 
     // Clear existing data
     await User.deleteMany();
@@ -211,13 +213,28 @@ const seedDB = async () => {
     console.log(`- Static Quiz: "${staticQuiz.title}"`);
     console.log(`- Adaptive Quiz: "${adaptiveQuiz.topic}" topic: "${adaptiveQuiz.title}"`);
 
-    mongoose.connection.close();
-    console.log('Database seeding complete. Database closed.');
-    process.exit(0);
+    return { admin, student, createdQuestions, staticQuiz, adaptiveQuiz };
   } catch (error) {
     console.error('Seeding error:', error);
-    process.exit(1);
+    throw error;
   }
 };
 
-seedDB();
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/adaptive-quiz')
+    .then(async () => {
+      console.log('Connected to MongoDB for CLI seeding...');
+      await seedDB();
+      console.log('Database seeding complete. Database closed.');
+      await mongoose.connection.close();
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Seeding connection error:', err);
+      process.exit(1);
+    });
+}
+
+module.exports = seedDB;
+

@@ -15,6 +15,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, role: 'student' | 'admin') => Promise<void>;
+  setUserInContext: (userData: any) => void;
   logout: () => void;
   clearError: () => void;
 }
@@ -39,6 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
+  const setUserInContext = (userData: any) => {
+    if (userData && userData.token) {
+      setToken(userData.token);
+    }
+    setUser(userData);
+  };
+
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -52,9 +60,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(userToken);
       setUser(userData);
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
+      const resData = err.response?.data;
+      const errMsg = resData?.message || 'Login failed. Please check credentials.';
       setError(errMsg);
-      throw new Error(errMsg);
+      const customError: any = new Error(errMsg);
+      if (resData?.requiresVerification) {
+        customError.requiresVerification = true;
+        customError.email = resData.email;
+      }
+      throw customError;
     } finally {
       setLoading(false);
     }
@@ -92,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, register, logout, clearError }}>
+    <AuthContext.Provider value={{ user, token, loading, error, login, register, setUserInContext, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GlassCard from '../components/GlassCard';
+import OTPVerificationModal from '../components/OTPVerificationModal';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import { BrainCircuit, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import API from '../services/api';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,12 +13,13 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
-  const { login } = useAuth();
+  const { login, setUserInContext } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect target after login (fallback to role-based default dashboard)
   const from = location.state?.from?.pathname;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,12 +33,52 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       await login(email, password);
-      // Retrieve the user from state to decide landing route
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const targetRoute = from || (storedUser.role === 'admin' ? '/admin' : '/dashboard');
       navigate(targetRoute, { replace: true });
     } catch (err: any) {
-      setFormError(err.message || 'Login failed. Verify your email and password.');
+      if (err.requiresVerification) {
+        setUnverifiedEmail(err.email || email);
+        setShowOtpModal(true);
+        setFormError('Your account is not verified. Please enter the verification code sent to your email.');
+      } else {
+        setFormError(err.message || 'Login failed. Verify your email and password.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpSuccess = (userData: any) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', userData.token);
+    setUserInContext(userData);
+    setShowOtpModal(false);
+    const targetRoute = from || (userData.role === 'admin' ? '/admin' : '/dashboard');
+    navigate(targetRoute, { replace: true });
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) return;
+
+    setLoading(true);
+    setFormError(null);
+
+    try {
+      const res = await API.post('/auth/google', {
+        credential: credentialResponse.credential,
+        role: 'student',
+      });
+
+      if (res.data.success) {
+        localStorage.setItem('user', JSON.stringify(res.data));
+        localStorage.setItem('token', res.data.token);
+        setUserInContext(res.data);
+        const targetRoute = from || (res.data.role === 'admin' ? '/admin' : '/dashboard');
+        navigate(targetRoute, { replace: true });
+      }
+    } catch (err: any) {
+      setFormError(err.response?.data?.message || 'Google Authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -66,19 +110,34 @@ const LoginPage: React.FC = () => {
           </div>
         )}
 
+        {/* Google OAuth Button */}
+        <div className="mb-5 flex flex-col items-center justify-center w-full">
+          <div className="w-full flex justify-center">
+            <GoogleAuthButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => setFormError('Google Login encountered an issue.')}
+              text="signin_with"
+            />
+          </div>
+          <div className="relative my-4 w-full text-center border-b border-gray-200 leading-[0.1em]">
+            <span className="bg-white px-3 text-xs text-gray-400 font-semibold uppercase">Or with Email</span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-4 py-3 glass-input text-sm rounded-md border border-gray-300"
                 required
               />
             </div>
@@ -89,13 +148,14 @@ const LoginPage: React.FC = () => {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+              <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-3 glass-input text-sm rounded-md border border-gray-300"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-11 py-3 glass-input text-sm rounded-md border border-gray-300"
                 required
               />
               <button
@@ -126,6 +186,14 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
       </GlassCard>
+
+      {/* OTP Verification Modal */}
+      <OTPVerificationModal
+        email={unverifiedEmail}
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        onSuccess={handleOtpSuccess}
+      />
     </div>
   );
 };

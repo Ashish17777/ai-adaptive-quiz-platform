@@ -98,14 +98,15 @@ const StudentJoin: React.FC = () => {
               Room PIN Code
             </label>
             <div className="relative">
-              <KeyRound className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500" />
+              <KeyRound className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 pointer-events-none z-10" />
               <input
                 type="text"
                 maxLength={6}
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
                 placeholder="123456"
-                className="w-full pl-11 pr-4 py-3 glass-input text-lg tracking-widest font-mono font-bold text-center"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-4 py-3 glass-input text-lg tracking-widest font-mono font-bold text-center"
                 required
               />
             </div>
@@ -116,13 +117,14 @@ const StudentJoin: React.FC = () => {
               Your Screen Name
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500" />
+              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 pointer-events-none z-10" />
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter nickname"
-                className="w-full pl-11 pr-4 py-3 glass-input text-sm"
+                style={{ paddingLeft: '2.75rem' }}
+                className="w-full pr-4 py-3 glass-input text-sm"
                 required
               />
             </div>
