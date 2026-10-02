@@ -3,6 +3,7 @@ import API from '../services/api';
 import StatsCard from '../components/StatsCard';
 import GlassCard from '../components/GlassCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import StudentDocumentImportModal from '../components/StudentDocumentImportModal';
 import { 
   Clock, 
   X, 
@@ -10,7 +11,8 @@ import {
   ArrowUpDown, 
   ChevronLeft, 
   ChevronRight, 
-  Filter 
+  Filter,
+  Upload
 } from 'lucide-react';
 
 interface Stats {
@@ -49,6 +51,7 @@ const AdminDashboard: React.FC = () => {
   const [recentAttempts, setRecentAttempts] = useState<RecentAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Drill-down modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -202,11 +205,20 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-extrabold text-white tracking-tight">Admin Overview</h2>
-        <p className="text-sm text-gray-400 font-medium mt-1">
-          Monitor platforms stats, users, quizzes, and learning attempts. Click on any metric card for a detailed drill-down report.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Admin Overview</h2>
+          <p className="text-sm text-gray-400 font-medium mt-1">
+            Monitor platforms stats, users, quizzes, and learning attempts. Click on any metric card for a detailed drill-down report.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsImportModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition shadow-lg shadow-blue-600/25 shrink-0 self-start sm:self-auto"
+        >
+          <Upload className="w-4 h-4" />
+          <span>Import Student Document</span>
+        </button>
       </div>
 
       {error && (
@@ -725,6 +737,18 @@ const AdminDashboard: React.FC = () => {
           </GlassCard>
         </div>
       )}
+
+      {/* Bulk Student Document Import Modal */}
+      <StudentDocumentImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          // Refresh dashboard metrics
+          API.get('/attempts/stats').then((res) => {
+            setStats(res.data.stats);
+          }).catch(() => {});
+        }}
+      />
     </div>
   );
 };

@@ -298,10 +298,88 @@ const loginUser = async (req, res) => {
   }
 };
 
+// Helper for generating secure random password
+const generateRandomPassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$';
+  let pass = '';
+  for (let i = 0; i < 8; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+};
+
+// @desc    Bulk import students from document file (CSV, JSON, TXT)
+// @route   POST /api/auth/bulk-import-students
+// @access  Private (Admin)
+const bulkImportStudents = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please upload a document file (.csv, .json, .txt)' });
+    }
+
+    const { parseDocument } = require('../utils/documentParser');
+    const parsedStudents = parseDocument(req.file.buffer, req.file.originalname, req.file.mimetype);
+
+    if (!parsedStudents || parsedStudents.length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid student records found in the uploaded file' });
+    }
+
+    const createdStudents = [];
+    const skippedStudents = [];
+
+    for (const record of parsedStudents) {
+      const cleanEmail = record.email.trim().toLowerCase();
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser) {
+        skippedStudents.push({
+          name: record.name,
+          email: cleanEmail,
+          reason: 'Email already exists',
+        });
+        continue;
+      }
+
+      // Auto-generate password if not provided
+      const rawPassword = record.password || generateRandomPassword();
+
+      const newUser = await User.create({
+        name: record.name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        password: rawPassword,
+        role: 'student',
+        isVerified: true, // Auto-verify imported accounts created by Admin
+      });
+
+      createdStudents.push({
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        generatedPassword: rawPassword,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Processed ${parsedStudents.length} records. Created ${createdStudents.length}, skipped ${skippedStudents.length}.`,
+      totalProcessed: parsedStudents.length,
+      createdCount: createdStudents.length,
+      skippedCount: skippedStudents.length,
+      createdStudents,
+      skippedStudents,
+    });
+  } catch (error) {
+    console.error('Bulk Student Import Error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to import students' });
+  }
+};
+
 module.exports = {
   registerUser,
   verifyOTP,
   resendOTP,
   googleAuth,
   loginUser,
+  bulkImportStudents,
 };
