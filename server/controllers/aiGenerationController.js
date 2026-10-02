@@ -10,6 +10,7 @@ const { generateCompleteQuiz } = require('../services/quizGenerator');
 const { generatePracticeQuiz } = require('../services/practiceGenerator');
 const { generateExplanationDetails } = require('../services/explanationGenerator');
 const { extractTextFromPDF, extractContextFromImage } = require('../services/contentExtractor');
+const { callGemini } = require('../services/geminiClient');
 
 function chunkText(text, size = 1500) {
   const chunks = [];
@@ -429,46 +430,21 @@ const getAIHealth = async (req, res) => {
     let apiConnected = false;
     let details = 'No LLM API Key configured in server environment.';
 
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.GROQ_API_KEY) {
       try {
-        const checkRes = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-          {
-            contents: [{ parts: [{ text: 'ping' }] }],
-            generationConfig: { maxOutputTokens: 5 }
-          },
-          { timeout: 5000 }
-        );
-        if (checkRes.status === 200) {
-          apiConnected = true;
-          details = 'Gemini API Connected successfully.';
-        }
+        await callGemini('ping');
+        apiConnected = true;
+        details = 'Groq API (OpenAI GPT-OSS-120B) Connected successfully.';
+      } catch (err) {
+        details = `Groq API ping failure: ${err.message}`;
+      }
+    } else if (process.env.GEMINI_API_KEY) {
+      try {
+        await callGemini('ping');
+        apiConnected = true;
+        details = 'Gemini 3.8 Flash API Connected successfully.';
       } catch (err) {
         details = `Gemini API ping failure: ${err.message}`;
-      }
-    } else if (process.env.OPENAI_API_KEY) {
-      try {
-        const checkRes = await axios.post(
-          'https://api.openai.com/v1/chat/completions',
-          {
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: 'ping' }],
-            max_tokens: 5
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 5000
-          }
-        );
-        if (checkRes.status === 200) {
-          apiConnected = true;
-          details = 'OpenAI API Connected successfully.';
-        }
-      } catch (err) {
-        details = `OpenAI API ping failure: ${err.message}`;
       }
     }
 

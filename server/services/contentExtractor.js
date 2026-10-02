@@ -1,4 +1,5 @@
 let pdfParse = require('pdf-parse');
+const { callGeminiVision } = require('./geminiClient');
 
 // Compatibility wrapper for mehmet-kozan's newer OOP-based pdf-parse library
 if (pdfParse && typeof pdfParse !== 'function' && pdfParse.PDFParse) {
@@ -48,80 +49,29 @@ async function extractTextFromPDF(pdfBuffer) {
  * In LLM mode, sends the image to a vision model (Gemini 1.5 Flash/OpenAI GPT-4o).
  */
 async function extractContextFromImage(imageBuffer, filename) {
-  const nameLower = (filename || 'image.png').toLowerCase();
-  
-  // 1. LLM Vision Mode: Gemini
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      const base64Image = imageBuffer.toString('base64');
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          contents: [{
-            parts: [
-              { text: "Analyze this educational diagram, graph, or chart. Identify the main subject/topic, standard terms shown, and describe what the graphic represents in 2 sentences. Return the result in JSON format: {\"topic\": \"math/science/etc\", \"description\": \"...\"}" },
-              {
-                inlineData: {
-                  mimeType: "image/png",
-                  data: base64Image
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            responseMimeType: "application/json"
-          }
-        }
-      );
-      
-      const resText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      const parsed = JSON.parse(resText);
-      if (parsed.topic) {
-        return {
-          topic: parsed.topic.toLowerCase(),
-          description: parsed.description,
-          keywords: [parsed.topic, ...extractKeywords(parsed.description)]
-        };
-      }
-    } catch (e) {
-      console.warn('[AIService] Gemini Vision API failed. Falling back. Error:', e.message);
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('AI Service Unavailable: API key is not configured. Please verify your environment settings.');
+  }
+
+  try {
+    const base64Image = imageBuffer.toString('base64');
+    const prompt = "Analyze this educational diagram, graph, or chart. Identify the main subject/topic, standard terms shown, and describe what the graphic represents in 2 sentences. Return the result in JSON format: {\"topic\": \"math/science/etc\", \"description\": \"...\"}";
+    
+    const resText = await callGeminiVision(prompt, base64Image, 'image/png', { jsonOutput: true });
+    const parsed = JSON.parse(resText);
+    if (parsed.topic) {
+      return {
+        topic: parsed.topic.toLowerCase(),
+        description: parsed.description,
+        keywords: [parsed.topic, ...extractKeywords(parsed.description)]
+      };
     }
+  } catch (e) {
+    console.error('[AIService] Gemini Vision API failed. Error:', e.message);
+    throw new Error('AI Service Unavailable: The diagram analysis engine is temporarily unreachable. Please try again after some time.');
   }
 
-  // 2. Fallback: Parse keywords from filename
-  console.log(`[AIService] Running rule-based image context extraction for filename "${filename}"`);
-  
-  let topic = 'general';
-  let description = 'An educational chart or diagram.';
-  const keywords = [];
-
-  // Match common educational keywords in filename
-  if (nameLower.includes('algebra') || nameLower.includes('equation')) {
-    topic = 'algebra';
-    description = 'An algebraic equation graph or function diagram.';
-  } else if (nameLower.includes('probability') || nameLower.includes('venn') || nameLower.includes('dice') || nameLower.includes('coin')) {
-    topic = 'probability';
-    description = 'A probability distribution chart or Venn diagram.';
-  } else if (nameLower.includes('physics') || nameLower.includes('motion') || nameLower.includes('force')) {
-    topic = 'physics';
-    description = 'A physics vector force or kinematics diagram.';
-  } else if (nameLower.includes('chemistry') || nameLower.includes('molecule') || nameLower.includes('atom') || nameLower.includes('periodic')) {
-    topic = 'chemistry';
-    description = 'A molecular structure diagram or periodic table chart.';
-  } else if (nameLower.includes('geometry') || nameLower.includes('triangle') || nameLower.includes('circle')) {
-    topic = 'geometry';
-    description = 'A geometric shape showing angles and lengths.';
-  }
-
-  keywords.push(topic);
-  const words = nameLower.split(/[^a-zA-Z]/).filter(w => w.length > 3 && w !== 'image' && w !== 'diagram' && w !== 'graph' && w !== 'png' && w !== 'jpg' && w !== 'jpeg');
-  keywords.push(...words);
-
-  return {
-    topic,
-    description,
-    keywords: [...new Set(keywords)]
-  };
+  throw new Error('AI Service Unavailable: The diagram analysis engine is temporarily unreachable. Please try again after some time.');
 }
 
 /**

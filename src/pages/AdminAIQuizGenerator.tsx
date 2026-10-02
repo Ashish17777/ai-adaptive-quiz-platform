@@ -9,6 +9,7 @@ import {
   BookOpen,
   Compass,
   CheckCircle,
+  AlertCircle,
   ListOrdered
 } from 'lucide-react';
 
@@ -54,7 +55,23 @@ const AdminAIQuizGenerator: React.FC = () => {
         setTopic('');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to auto-generate quiz.');
+      const msg = err.response?.data?.message || err.message || '';
+      const isAiDown = typeof msg === 'string' && (
+        msg.toLowerCase().includes('unavailable') ||
+        msg.toLowerCase().includes('unreachable') ||
+        msg.toLowerCase().includes('temporarily') ||
+        msg.toLowerCase().includes('network') ||
+        msg.toLowerCase().includes('gemini') ||
+        msg.toLowerCase().includes('groq') ||
+        err.code === 'ERR_NETWORK' ||
+        err.response?.status === 500 ||
+        err.response?.status === 503
+      );
+      if (!isAiDown) {
+        setError(msg || 'Failed to auto-generate quiz.');
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -83,8 +100,9 @@ const AdminAIQuizGenerator: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-2.5 rounded-lg">
-          {error}
+        <div className="flex items-center space-x-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm px-4 py-3 rounded-xl shadow-sm">
+          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+          <span className="font-medium leading-relaxed">{error}</span>
         </div>
       )}
 

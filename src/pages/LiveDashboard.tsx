@@ -229,8 +229,8 @@ const LiveDashboard: React.FC = () => {
             ) : (
               (live?.leaderboard || []).slice(0, 8).map((entry, i) => (
                 <div key={i} className="flex items-center space-x-3 bg-white/3 rounded-xl px-3 py-2.5">
-                  <span className={`text-sm font-black w-6 text-center ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-700' : 'text-gray-600'}`}>
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
+                  <span className={`text-xs font-mono font-bold w-7 text-center rounded-md py-0.5 ${i === 0 ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20' : i === 1 ? 'text-slate-300 bg-slate-500/10 border border-slate-500/20' : i === 2 ? 'text-amber-600 bg-amber-800/10 border border-amber-800/20' : 'text-slate-500'}`}>
+                    #{i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-white truncate">{entry.name}</p>

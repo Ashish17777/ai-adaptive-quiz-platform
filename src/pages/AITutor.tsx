@@ -57,7 +57,7 @@ const AITutor: React.FC = () => {
           // Welcome message
           setMessages([{
             role: 'assistant',
-            content: `Hello ${user.name}! 👋 I'm your AI Study Tutor. I can help you:\n\n**Explain questions** you got wrong\n**Recommend topics** to study next\n**Teach concepts** step by step\n**Generate practice** quizzes for weak areas\n\nWhat would you like to work on today?`,
+            content: `Welcome ${user.name}. I am your AI Study Tutor. I can assist you with:\n\n• Detailed question explanations\n• Personalized topic recommendations\n• Step-by-step conceptual walkthroughs\n• Targeted practice quizzes for weak areas\n\nWhat would you like to review today?`,
             timestamp: new Date().toISOString(),
           }]);
         }
@@ -110,7 +110,7 @@ const AITutor: React.FC = () => {
     } catch (e: any) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, I ran into an issue. Please try again.',
+        content: e.response?.data?.message || 'AI Service Unavailable: Our AI tutor service is temporarily unreachable. Please try again after some time.',
         timestamp: new Date().toISOString(),
       }]);
     } finally {

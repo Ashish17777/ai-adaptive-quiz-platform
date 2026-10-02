@@ -38,11 +38,14 @@ import AdminSecurityDashboard from './pages/AdminSecurityDashboard';
 import AdminIntelligenceDashboard from './pages/AdminIntelligenceDashboard';
 import LiveDashboard from './pages/LiveDashboard';
 
+import AIServiceDownModal from './components/AIServiceDownModal';
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <AIServiceDownModal />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />

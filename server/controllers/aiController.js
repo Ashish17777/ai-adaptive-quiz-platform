@@ -585,7 +585,7 @@ const getStreak = async (req, res) => {
     if (weakTopics.length > 0) {
       goals.push({
         type: 'accuracy',
-        icon: '🎯',
+        icon: 'target',
         title: `Improve ${weakTopics[0].topic} accuracy above 60%`,
         current: weakTopics[0].accuracy,
         target: 60,
@@ -596,7 +596,7 @@ const getStreak = async (req, res) => {
     if (intermTopics.length > 0) {
       goals.push({
         type: 'mastery',
-        icon: '⭐',
+        icon: 'star',
         title: `Master ${intermTopics[0].topic} (reach 85% accuracy)`,
         current: intermTopics[0].accuracy,
         target: 85,
@@ -606,7 +606,7 @@ const getStreak = async (req, res) => {
 
     goals.push({
       type: 'streak',
-      icon: '🔥',
+      icon: 'streak',
       title: 'Complete 3 quizzes this week',
       current: Math.min(3, user?.currentStreak || 0),
       target: 3,

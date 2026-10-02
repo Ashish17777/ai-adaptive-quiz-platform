@@ -432,7 +432,7 @@ const StudentAnalytics: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400 font-medium">Consecutive Day Streak</span>
                   <span className="text-xs font-black font-mono text-amber-400">
-                    🔥 {behavior?.studyStreak || 0} days
+                    {behavior?.studyStreak || 0} days
                   </span>
                 </div>
               </div>

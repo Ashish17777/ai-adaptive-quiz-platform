@@ -30,3 +30,27 @@ server/.env.*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*~
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Build & Caches
+.cache/
+.vite/
+.parcel-cache/
+coverage/
+.nyc_output/
+
+# Temporary and Scratch Files
+*.tmp
+*.temp
+*.bak
+scratch/
+scratch_*
+*.scratch.*
+

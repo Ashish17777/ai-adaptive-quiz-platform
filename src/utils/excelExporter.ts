@@ -1,6 +1,6 @@
 /**
  * Excel / Spreadsheet Exporter Utility
- * Generates formatted Excel (.xlsx) files containing student login credentials (Name, Email, Password).
+ * Generates clean spreadsheet files (CSV / Excel compatible) containing student credentials.
  */
 
 export interface StudentCredential {
@@ -9,9 +9,12 @@ export interface StudentCredential {
   generatedPassword: string;
 }
 
+/**
+ * Downloads student credentials in standard CSV format that opens natively in Microsoft Excel
+ */
 export function downloadStudentCredentialsExcel(
   students: StudentCredential[],
-  filename = 'imported_student_credentials.xlsx'
+  filename = 'imported_student_credentials.csv'
 ) {
   if (!students || students.length === 0) return;
 
@@ -19,13 +22,15 @@ export function downloadStudentCredentialsExcel(
   const rows = students.map((s) => [
     `"${(s.name || '').replace(/"/g, '""')}"`,
     `"${(s.email || '').replace(/"/g, '""')}"`,
-    `"${(s.generatedPassword || '').replace(/"/g, '""')}"`
+    `"${(s.generatedPassword || '').replace(/"/g, '""')}"`,
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
-  
-  // UTF-8 BOM ensures Excel handles characters cleanly without formatting issues
-  const blob = new Blob(['\ufeff' + csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+
+  // UTF-8 BOM (\ufeff) allows Microsoft Excel on Windows & Mac to recognize the file encoding immediately
+  const blob = new Blob(['\ufeff' + csvContent], {
+    type: 'text/csv;charset=utf-8;',
+  });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement('a');

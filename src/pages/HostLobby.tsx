@@ -5,7 +5,7 @@ import socket from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import GlassCard from '../components/GlassCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Users, Play, ArrowLeft, Award, ShieldAlert, Shield, AlertTriangle, Video, Lock, History, CheckCircle2 } from 'lucide-react';
+import { Users, Play, ArrowLeft, Award, ShieldAlert, Shield, History } from 'lucide-react';
 
 interface Participant {
   _id: string;
@@ -272,9 +272,9 @@ const HostLobby: React.FC = () => {
 
     const difficultyLabels = {
       easy: 'Easy',
-      medium: 'Medium ⚡',
-      hard: 'Hard 🔥',
-      expert: 'Expert 👑',
+      medium: 'Medium',
+      hard: 'Hard',
+      expert: 'Expert',
     };
 
     const difficultyTextColors = {

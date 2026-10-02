@@ -401,8 +401,8 @@ const StudentDashboard: React.FC = () => {
                 </div>
                 <p className="text-[10px] text-gray-500 leading-relaxed font-semibold">
                   {metrics && metrics.consistencyScore >= 70
-                    ? '🔥 Keep up the consistent pace! You are retaining concepts at a high velocity.'
-                    : '⚡ Initiate one additional practice drill to build your retention multiplier.'}
+                    ? 'Keep up the consistent pace. You are retaining concepts at a high velocity.'
+                    : 'Initiate one additional practice drill to build your retention multiplier.'}
                 </p>
               </GlassCard>
 

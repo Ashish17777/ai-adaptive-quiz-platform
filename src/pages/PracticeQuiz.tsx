@@ -7,6 +7,7 @@ import {
   ArrowLeft, ArrowRight, CheckCircle, Zap, BrainCircuit,
   AlertCircle, RefreshCw, ShieldAlert
 } from 'lucide-react';
+import { FormattedQuestionText, FormattedOptionText } from '../components/FormattedQuestionText';
 
 interface PracticeQuestion {
   _id: string;
@@ -268,7 +269,9 @@ const PracticeQuiz: React.FC = () => {
 
           <div className="space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Question</span>
-            <h4 className="text-lg font-bold text-white leading-relaxed">{currentQ.questionText}</h4>
+            <div className="text-lg font-bold text-white leading-relaxed">
+              <FormattedQuestionText text={currentQ.questionText} />
+            </div>
           </div>
 
           {/* Options */}
@@ -288,7 +291,9 @@ const PracticeQuiz: React.FC = () => {
                 }`}>
                   {String.fromCharCode(65 + idx)}
                 </span>
-                <span className="flex-1 leading-snug">{opt}</span>
+                <span className="flex-1 leading-snug">
+                  <FormattedOptionText text={opt} />
+                </span>
               </button>
             ))}
           </div>

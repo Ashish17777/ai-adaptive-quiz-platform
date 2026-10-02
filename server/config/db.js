@@ -8,7 +8,7 @@ const connectDB = async () => {
   // 1. Try connecting to configured MongoDB (Atlas or local) with a 3-second timeout
   try {
     const conn = await mongoose.connect(primaryUri, {
-      serverSelectionTimeoutMS: 3000,
+      serverSelectionTimeoutMS: 8000,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     return;

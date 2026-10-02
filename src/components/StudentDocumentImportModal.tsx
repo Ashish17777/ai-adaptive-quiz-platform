@@ -260,7 +260,7 @@ const StudentDocumentImportModal: React.FC<StudentDocumentImportModalProps> = ({
                         className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Download Excel (.xlsx)</span>
+                        <span>Download Spreadsheet (.csv)</span>
                       </button>
                       <button
                         type="button"

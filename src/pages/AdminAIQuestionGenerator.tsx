@@ -12,8 +12,10 @@ import {
   Image as ImageIcon,
   Edit2,
   CheckCircle,
+  AlertCircle,
   HelpCircle
 } from 'lucide-react';
+import { FormattedQuestionText, FormattedOptionText } from '../components/FormattedQuestionText';
 
 interface GeneratedQuestion {
   questionText: string;
@@ -78,7 +80,23 @@ const AdminAIQuestionGenerator: React.FC = () => {
       });
       setQuestions(res.data.questions || []);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error generating AI questions.');
+      const msg = err.response?.data?.message || err.message || '';
+      const isAiDown = typeof msg === 'string' && (
+        msg.toLowerCase().includes('unavailable') ||
+        msg.toLowerCase().includes('unreachable') ||
+        msg.toLowerCase().includes('temporarily') ||
+        msg.toLowerCase().includes('network') ||
+        msg.toLowerCase().includes('gemini') ||
+        msg.toLowerCase().includes('groq') ||
+        err.code === 'ERR_NETWORK' ||
+        err.response?.status === 500 ||
+        err.response?.status === 503
+      );
+      if (!isAiDown) {
+        setError(msg || 'Failed to generate AI questions.');
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -115,7 +133,23 @@ const AdminAIQuestionGenerator: React.FC = () => {
         snippet: res.data.textSnippet || ''
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error parsing PDF notes.');
+      const msg = err.response?.data?.message || err.message || '';
+      const isAiDown = typeof msg === 'string' && (
+        msg.toLowerCase().includes('unavailable') ||
+        msg.toLowerCase().includes('unreachable') ||
+        msg.toLowerCase().includes('temporarily') ||
+        msg.toLowerCase().includes('network') ||
+        msg.toLowerCase().includes('gemini') ||
+        msg.toLowerCase().includes('groq') ||
+        err.code === 'ERR_NETWORK' ||
+        err.response?.status === 500 ||
+        err.response?.status === 503
+      );
+      if (!isAiDown) {
+        setError(msg || 'Failed to parse PDF notes.');
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -146,7 +180,20 @@ const AdminAIQuestionGenerator: React.FC = () => {
       setTopic(res.data.topic || '');
       setSuccessMsg(`AI analyzed diagram context: "${res.data.topic}". preview questions below.`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error extracting context from diagram image.');
+      const msg = err.response?.data?.message || err.message || '';
+      const isAiDown = typeof msg === 'string' && (
+        msg.toLowerCase().includes('unavailable') ||
+        msg.toLowerCase().includes('unreachable') ||
+        msg.toLowerCase().includes('temporarily') ||
+        msg.toLowerCase().includes('gemini') ||
+        err.response?.status === 500 ||
+        err.response?.status === 503
+      );
+      if (!isAiDown) {
+        setError(msg || 'Failed to extract diagram context with AI.');
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -238,8 +285,9 @@ const AdminAIQuestionGenerator: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-2.5 rounded-lg">
-          {error}
+        <div className="flex items-center space-x-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm px-4 py-3 rounded-xl shadow-sm">
+          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+          <span className="font-medium leading-relaxed">{error}</span>
         </div>
       )}
 
@@ -516,7 +564,9 @@ const AdminAIQuestionGenerator: React.FC = () => {
                             />
                           </div>
                         ) : (
-                          <h4 className="text-sm font-semibold text-white leading-relaxed">{q.questionText}</h4>
+                          <div className="text-sm font-semibold text-white leading-relaxed">
+                            <FormattedQuestionText text={q.questionText} />
+                          </div>
                         )}
 
                         {/* Options Inputs */}
@@ -543,7 +593,7 @@ const AdminAIQuestionGenerator: React.FC = () => {
                                     className="flex-1 bg-white/2 border border-transparent rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500/50"
                                   />
                                 ) : (
-                                  <span className="flex-1 truncate">{opt}</span>
+                                  <FormattedOptionText text={opt} className="flex-1 text-gray-200" />
                                 )}
                               </div>
                             );
@@ -582,7 +632,9 @@ const AdminAIQuestionGenerator: React.FC = () => {
                                 className="w-full bg-white/2 border border-white/5 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500/50"
                               />
                             ) : (
-                              <p className="text-gray-400 italic truncate">{q.explanation || 'No solution text.'}</p>
+                              <div className="text-gray-300 text-xs">
+                                <FormattedQuestionText text={q.explanation || 'No solution text.'} />
+                              </div>
                             )}
                           </div>
                         </div>

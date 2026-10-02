@@ -69,6 +69,7 @@ const registerUser = async (req, res) => {
     }
 
     // 3. Send OTP Email via Resend / Logger Service
+    console.log(`\n\x1b[44m\x1b[37m\x1b[1m 🔑 [REGISTRATION OTP] Email: ${user.email} | OTP: ${otpCode} \x1b[0m\n`);
     await sendOTPEmail(user.email, user.name, otpCode);
 
     res.status(201).json({

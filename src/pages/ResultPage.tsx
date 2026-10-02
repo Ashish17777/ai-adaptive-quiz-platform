@@ -17,6 +17,7 @@ import {
   Activity,
   BrainCircuit
 } from 'lucide-react';
+import { FormattedQuestionText, FormattedOptionText } from '../components/FormattedQuestionText';
 
 interface Question {
   _id: string;
@@ -497,9 +498,9 @@ const ResultPage: React.FC = () => {
                 </div>
 
                 {/* Prompt */}
-                <h4 className="text-base font-semibold text-white mt-4 leading-relaxed">
-                  {q.questionText}
-                </h4>
+                <div className="text-base font-semibold text-white mt-4 leading-relaxed">
+                  <FormattedQuestionText text={q.questionText} />
+                </div>
 
                 {/* Options Review Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
@@ -534,7 +535,9 @@ const ResultPage: React.FC = () => {
                         >
                           {String.fromCharCode(65 + oIdx)}
                         </span>
-                        <span className="flex-grow">{opt}</span>
+                        <span className="flex-grow">
+                          <FormattedOptionText text={opt} />
+                        </span>
                         {leadingIcon}
                       </div>
                     );
@@ -574,9 +577,9 @@ const ResultPage: React.FC = () => {
                 </div>
 
                 {q.explanation && (
-                  <div className="mt-3 bg-white/2 border border-white/5 p-3 rounded-lg text-xs leading-relaxed text-gray-400">
+                  <div className="mt-3 bg-white/2 border border-white/5 p-3 rounded-lg text-xs leading-relaxed text-gray-300">
                     <span className="font-bold text-gray-300 block mb-1">Explanation:</span>
-                    {q.explanation}
+                    <FormattedQuestionText text={q.explanation} />
                   </div>
                 )}
               </GlassCard>

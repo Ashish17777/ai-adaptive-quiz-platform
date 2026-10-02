@@ -23,6 +23,7 @@ import {
   Timer,
   Lock,
 } from 'lucide-react';
+import { FormattedQuestionText, FormattedOptionText } from '../components/FormattedQuestionText';
 
 interface Question {
   _id: string;
@@ -407,7 +408,7 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto py-6 px-4 flex flex-col lg:flex-row gap-6 relative select-none">
-      {/* ⚠️ Suspicious Violations Notification Banner */}
+      {/* Suspicious Violations Notification Banner */}
       {warningMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md bg-amber-500/90 backdrop-blur-md border border-amber-600 text-black px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
           <AlertTriangle className="w-6 h-6 flex-shrink-0 animate-bounce" />
@@ -418,7 +419,7 @@ const QuizPage: React.FC = () => {
         </div>
       )}
 
-      {/* 🛑 Auto-Submission Lockout Modal */}
+      {/* Auto-Submission Lockout Modal */}
       {autoSubmitReason && (
         <div className="fixed inset-0 z-50 bg-[#070b11]/90 backdrop-blur-md flex items-center justify-center p-4 select-none">
           <GlassCard className="max-w-md w-full border border-red-500/20 text-center p-8 space-y-6">
@@ -441,7 +442,7 @@ const QuizPage: React.FC = () => {
         </div>
       )}
 
-      {/* 🔒 Fullscreen Lockdown Gate */}
+      {/* Fullscreen Lockdown Gate */}
       {needsFullscreenBlock && (
         <div className="fixed inset-0 z-40 bg-[#070b11]/95 backdrop-blur-sm flex items-center justify-center p-4 select-none">
           <GlassCard className="max-w-md w-full border border-indigo-500/20 text-center p-8 space-y-6">
@@ -620,9 +621,9 @@ const QuizPage: React.FC = () => {
                   <span className="w-fit px-3 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                     Prompt
                   </span>
-                  <h4 className="text-lg sm:text-xl font-bold text-white leading-relaxed mt-2 font-sans">
-                    {currentQuestion.questionText}
-                  </h4>
+                  <div className="text-lg sm:text-xl font-bold text-white leading-relaxed mt-2 font-sans">
+                    <FormattedQuestionText text={currentQuestion.questionText} />
+                  </div>
                 </div>
 
                 {/* Options list */}
@@ -653,7 +654,9 @@ const QuizPage: React.FC = () => {
                       >
                         {String.fromCharCode(65 + idx)}
                       </span>
-                      <span className="flex-1 leading-snug">{opt}</span>
+                      <span className="flex-1 leading-snug">
+                        <FormattedOptionText text={opt} />
+                      </span>
                     </button>
                   ))}
                 </div>

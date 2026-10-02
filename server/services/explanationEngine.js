@@ -13,12 +13,12 @@ const DIFFICULTY_HINTS = {
 };
 
 const CONFIDENCE_FEEDBACK = {
-  'correct-high': '✅ Great — your high confidence matched your correct answer. This topic is building towards mastery.',
-  'correct-medium': '✅ You got it right with moderate confidence. Review this concept once more to solidify your understanding.',
-  'correct-low': '⚠️ You got it right but had low confidence. Practice more to build self-belief in this topic.',
-  'wrong-high': '❌ You were highly confident but answered incorrectly. This is a common overconfidence pattern. Review the fundamentals carefully.',
-  'wrong-medium': '❌ You were moderately confident but answered incorrectly. Take time to re-read the concept before your next attempt.',
-  'wrong-low': '❌ You expected to get this wrong — and did. Try some easier questions on this topic first.',
+  'correct-high': 'Correct. Your high confidence matched your correct answer. This topic is building towards mastery.',
+  'correct-medium': 'Correct. You got it right with moderate confidence. Review this concept once more to solidify your understanding.',
+  'correct-low': 'Correct. You got it right but had low confidence. Practice more to build self-belief in this topic.',
+  'wrong-high': 'Incorrect. You were highly confident but answered incorrectly. Review the fundamentals carefully.',
+  'wrong-medium': 'Incorrect. You were moderately confident but answered incorrectly. Take time to re-read the concept before your next attempt.',
+  'wrong-low': 'Incorrect. You expected to struggle and missed this item. Try some foundational questions on this topic first.',
 };
 
 /**
@@ -126,7 +126,7 @@ function generateChatResponse(message, context = {}) {
   }
 
   if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-    return `Hello! 👋 I'm your AI Study Tutor. I can explain incorrect questions, recommend topics to study next, or help you practice. What's on your mind?`;
+    return `Hello. I am your AI Study Tutor. I can explain incorrect questions, recommend topics to study next, or help you practice. What is on your mind?`;
   }
 
   // 3. Route based on Intent and Learning Level

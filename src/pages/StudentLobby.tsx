@@ -19,10 +19,8 @@ import {
   AlertTriangle,
   Lock,
   Monitor,
-  Copy,
-  Eye,
-  Camera,
 } from 'lucide-react';
+import { FormattedQuestionText, FormattedOptionText } from '../components/FormattedQuestionText';
 
 interface SecuritySettings {
   enforceSecurity: boolean;
@@ -39,6 +37,7 @@ interface Participant {
   currentDifficulty: string;
   questionsAnswered: number;
   correctStreak: number;
+  adaptiveScore?: number;
   isCompleted?: boolean;
   violationsCount?: number;
   riskScore?: number;
@@ -110,7 +109,6 @@ const StudentLobby: React.FC = () => {
     cameraActive,
     requestFullscreen,
     securityAlerts,
-    setTabSwitches,
     setViolationsCount,
     setRiskScore,
     setRiskCategory,
@@ -232,7 +230,7 @@ const StudentLobby: React.FC = () => {
       setRiskCategory(data.riskCategory);
     });
 
-    socket.on('attempts_remaining_updated', (data: { attemptsRemaining: number }) => {
+    socket.on('attempts_remaining_updated', () => {
       // synced via violationsCount recalculations
     });
 
@@ -411,13 +409,13 @@ const StudentLobby: React.FC = () => {
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Final Score</p>
                 <p className="text-2xl font-black text-white mt-1">
-                  {room.participants.find(p => p.name === playerInfo?.name)?.score || 0}
+                  {room.participants.find(p => p.name === playerInfo?.name)?.score ?? finalScore.score}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Adaptive Score</p>
                 <p className="text-2xl font-black text-indigo-400 mt-1">
-                  {room.participants.find(p => p.name === playerInfo?.name)?.adaptiveScore || 0}
+                  {room.participants.find(p => p.name === playerInfo?.name)?.adaptiveScore ?? finalScore.adaptiveScore}
                 </p>
               </div>
             </div>
@@ -451,7 +449,7 @@ const StudentLobby: React.FC = () => {
 
     return (
       <div className="min-h-screen bg-[#070b11] px-4 py-8 relative select-none">
-        {/* ⚠️ Suspicious Violations Notification Banner */}
+        {/* Suspicious Violations Notification Banner */}
         {warningMessage && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md bg-amber-500/90 backdrop-blur-md border border-amber-600 text-black px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
             <AlertTriangle className="w-6 h-6 flex-shrink-0 animate-bounce" />
@@ -462,7 +460,7 @@ const StudentLobby: React.FC = () => {
           </div>
         )}
 
-        {/* 🔒 Fullscreen Lockdown Gate */}
+        {/* Fullscreen Lockdown Gate */}
         {needsFullscreenBlock && (
           <div className="fixed inset-0 z-40 bg-[#070b11]/95 backdrop-blur-sm flex items-center justify-center p-4 select-none">
             <GlassCard className="max-w-md w-full border border-indigo-500/20 text-center p-8 space-y-6">
@@ -679,9 +677,9 @@ const StudentLobby: React.FC = () => {
                 <span className="w-fit px-3 py-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                   Question Prompt
                 </span>
-                <h4 className="text-lg sm:text-xl font-bold text-white leading-relaxed mt-2">
-                  {activeQuestion.questionText}
-                </h4>
+                <div className="text-lg sm:text-xl font-bold text-white leading-relaxed mt-2">
+                  <FormattedQuestionText text={activeQuestion.questionText} />
+                </div>
               </div>
 
               {/* Options grid */}
@@ -719,7 +717,9 @@ const StudentLobby: React.FC = () => {
                       >
                         {String.fromCharCode(65 + idx)}
                       </span>
-                      <span className="flex-1 leading-snug">{opt}</span>
+                      <span className="flex-1 leading-snug">
+                        <FormattedOptionText text={opt} />
+                      </span>
                     </button>
                   );
                 })}
