@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import API from '../services/api';
-import { Upload, FileText, CheckCircle2, AlertCircle, Download, Copy, Check, X, Users } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Download, Copy, Check, X, Users, Trash2 } from 'lucide-react';
 
 interface CreatedStudent {
   _id: string;
@@ -41,6 +41,7 @@ const StudentDocumentImportModal: React.FC<StudentDocumentImportModalProps> = ({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   if (!isOpen) return null;
 
@@ -119,6 +120,26 @@ const StudentDocumentImportModal: React.FC<StudentDocumentImportModalProps> = ({
     setFile(null);
     setError(null);
     setResult(null);
+  };
+
+  const handleClearStudents = async () => {
+    if (!window.confirm('Are you sure you want to delete all student records from the database? This action cannot be undone.')) {
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+    try {
+      const response = await API.delete('/auth/clear-students');
+      alert(response.data.message || 'All student records cleared successfully.');
+      if (onSuccess) onSuccess();
+      resetState();
+      onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to clear student records.');
+    } finally {
+      setClearing(false);
+    }
   };
 
   return (
@@ -298,50 +319,63 @@ const StudentDocumentImportModal: React.FC<StudentDocumentImportModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-800 bg-slate-900/50">
-          {!result ? (
-            <>
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-800 bg-slate-900/50">
+          <button
+            type="button"
+            disabled={clearing}
+            onClick={handleClearStudents}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition disabled:opacity-50"
+            title="Delete all student accounts from database"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>{clearing ? 'Clearing...' : 'Clear All Students'}</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            {!result ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetState();
+                    onClose();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!file || loading}
+                  onClick={handleUpload}
+                  className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-xl transition shadow-lg shadow-blue-600/20"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Processing Document...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      <span>Import Student Document</span>
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
                 onClick={() => {
                   resetState();
                   onClose();
                 }}
-                className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition"
+                className="px-5 py-2 text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition"
               >
-                Cancel
+                Done & Close
               </button>
-              <button
-                type="button"
-                disabled={!file || loading}
-                onClick={handleUpload}
-                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-xl transition shadow-lg shadow-blue-600/20"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Processing Document...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    <span>Import Student Document</span>
-                  </>
-                )}
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                resetState();
-                onClose();
-              }}
-              className="px-5 py-2 text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition"
-            >
-              Done & Close
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

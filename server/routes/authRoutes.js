@@ -9,6 +9,7 @@ const {
   googleAuth,
   loginUser,
   bulkImportStudents,
+  clearAllStudents,
 } = require('../controllers/authController');
 
 router.post('/register', registerUser);
@@ -17,5 +18,6 @@ router.post('/resend-otp', resendOTP);
 router.post('/google', googleAuth);
 router.post('/login', loginUser);
 router.post('/bulk-import-students', protect, authorize('admin'), upload.single('file'), bulkImportStudents);
+router.delete('/clear-students', protect, authorize('admin'), clearAllStudents);
 
 module.exports = router;

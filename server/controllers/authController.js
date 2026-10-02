@@ -375,6 +375,23 @@ const bulkImportStudents = async (req, res) => {
   }
 };
 
+// @desc    Clear all student records (removes all users with role 'student')
+// @route   DELETE /api/auth/clear-students
+// @access  Private (Admin)
+const clearAllStudents = async (req, res) => {
+  try {
+    const result = await User.deleteMany({ role: 'student' });
+    res.json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} student accounts from the database.`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Clear Students Error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete student accounts' });
+  }
+};
+
 module.exports = {
   registerUser,
   verifyOTP,
@@ -382,4 +399,5 @@ module.exports = {
   googleAuth,
   loginUser,
   bulkImportStudents,
+  clearAllStudents,
 };
