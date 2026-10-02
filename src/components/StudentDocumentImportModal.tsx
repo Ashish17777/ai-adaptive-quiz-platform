@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import API from '../services/api';
+import { downloadStudentCredentialsExcel } from '../utils/excelExporter';
 import { Upload, FileText, CheckCircle2, AlertCircle, Download, Copy, Check, X, Users, Trash2 } from 'lucide-react';
 
 interface CreatedStudent {
@@ -252,14 +253,24 @@ const StudentDocumentImportModal: React.FC<StudentDocumentImportModalProps> = ({
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       Created Student Credentials ({result.createdStudents.length})
                     </h3>
-                    <button
-                      type="button"
-                      onClick={copyAllCredentials}
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[var(--text-primary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg transition"
-                    >
-                      {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedAll ? 'Copied All!' : 'Copy All Credentials'}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => downloadStudentCredentialsExcel(result.createdStudents)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download Excel (.xlsx)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={copyAllCredentials}
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[var(--text-primary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg transition"
+                      >
+                        {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedAll ? 'Copied All!' : 'Copy All Credentials'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--bg-secondary)] max-h-60 overflow-y-auto">
