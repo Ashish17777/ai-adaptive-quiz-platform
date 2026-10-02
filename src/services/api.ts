@@ -16,6 +16,11 @@ API.interceptors.request.use(
     }
     return config;
   },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor to handle 401 Unauthorized responses (e.g. stale tokens when DB restarts)
 API.interceptors.response.use(
   (response) => response,
